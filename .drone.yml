@@ -266,6 +266,33 @@ steps:
   - grabpl
   image: grafana/build-container:1.6.2
   name: yarn-install
+- commands:
+  - git clone "https://github.com/grafana/grafana-enterprise.git" --depth=1
+  - cd grafana-enterprise
+  - git fetch origin "refs/tags/*:refs/tags/*"
+  - git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG} && git tag $${TEST_TAG}
+    && git push origin $${TEST_TAG}
+  - cd -
+  - git fetch origin "refs/tags/*:refs/tags/*"
+  - git remote add downstream https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git
+  - git tag -d $${TEST_TAG} && git push --delete downstream --quiet $${TEST_TAG} &&
+    git tag $${TEST_TAG} && git push downstream $${TEST_TAG} --quiet
+  environment:
+    DOWNSTREAM_REPO:
+      from_secret: downstream
+    GITHUB_TOKEN:
+      from_secret: github_token
+    TEST_TAG: v0.0.0-test
+  failure: ignore
+  image: grafana/build-container:1.6.2
+  name: trigger-test-release
+  when:
+    paths:
+      include:
+      - .drone.yml
+      - pkg/build/**
+    repo:
+    - grafana/grafana
 - failure: ignore
   image: grafana/drone-downstream
   name: trigger-enterprise-downstream
@@ -1008,15 +1035,14 @@ steps:
   image: grafana/build-container:1.6.2
   name: yarn-install
 - commands:
-  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
-    --depth=1
+  - git clone "https://github.com/grafana/grafana-enterprise.git" --depth=1
   - cd grafana-enterprise
   - git fetch origin "refs/tags/*:refs/tags/*"
   - git tag -d $${TEST_TAG} && git push --delete origin $${TEST_TAG} && git tag $${TEST_TAG}
     && git push origin $${TEST_TAG}
   - cd -
   - git fetch origin "refs/tags/*:refs/tags/*"
-  - git remote add downstream https://$${GITHUB_TOKEN}@github.com/grafana/$${DOWNSTREAM_REPO}.git
+  - git remote add downstream https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git
   - git tag -d $${TEST_TAG} && git push --delete downstream --quiet $${TEST_TAG} &&
     git tag $${TEST_TAG} && git push downstream $${TEST_TAG} --quiet
   environment:
@@ -2015,9 +2041,6 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2125,9 +2148,6 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2229,9 +2249,6 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2297,9 +2314,6 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2639,9 +2653,6 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2792,9 +2803,6 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -2948,9 +2956,6 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -3038,9 +3043,6 @@ trigger:
     - promote
   ref:
   - refs/tags/v*
-  repo:
-    exclude:
-    - grafana/grafana
 type: docker
 volumes:
 - host:
@@ -5112,6 +5114,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 3298924f36cbab63be3873f763ead9406f47dc8b98142678d69ea83b4012541c
+hmac: 37973057b86515c96aff1d96d66c1d03a11379f6e0b4158157ef0c39a42fbea4
 
 ...
